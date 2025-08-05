@@ -15,7 +15,7 @@ try:
 
   cor=str(input('Cor do veículo: '))
 
-  combustiveis=['gasolina', 'elétrico', 'diesel', 'etanol', 'gnv', 'flex']
+  combustiveis=['gasolina', 'elétrico', 'diesel', 'etanol', 'gnv', 'flex'] 
   while True:
     print('Tipos de combustível válidos: Gasolina, Elétrico, Diesel, Etanol, GNV, Flex')
     combustivel=str(input('Tipo de combustível:'))
