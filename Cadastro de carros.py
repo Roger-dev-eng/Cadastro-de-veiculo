@@ -42,46 +42,51 @@ def listar_carros():
 def cadastrar_novo():
     print('\n--- CADASTRO DE NOVO CARRO ---')
     
-    marca = input('Marca do veículo: ').strip().title()
-    modelo = input('Modelo do veículo: ').strip().title()
-    ano = int(input('Ano de fabricação: '))
-    cor = input('Cor do veículo: ').strip().title()
+    try:
+        marca = input('Marca do veículo: ').strip().title()
+        modelo = input('Modelo do veículo: ').strip().title()
+        ano = int(input('Ano de fabricação: '))
+        cor = input('Cor do veículo: ').strip().title()
+        
+        combustiveis = ['gasolina', 'álcool', 'flex', 'diesel', 'elétrico', 'híbrido']
+        combustivel = input(f"Combustível ({'/'.join(combustiveis)}): ").lower()
+        while combustivel not in combustiveis:
+            print("Combustível inválido!")
+            combustivel = input(f"Digite um combustível válido ({'/'.join(combustiveis)}): ").lower()
+        
+        cambios = ['manual', 'automático', 'automatizado', 'cvt']
+        cambio = input(f"Câmbio ({'/'.join(cambios)}): ").lower()
+        while cambio not in cambios:
+            print("Câmbio inválido!")
+            cambio = input(f"Digite um câmbio válido ({'/'.join(cambios)}): ").lower()
+        
+        portas = int(input('Número de portas (2-5): '))
+        while portas < 2 or portas > 5:
+            print("Número de portas inválido!")
+            portas = int(input('Digite um número entre 2 e 5: '))
+        
+        novo_carro = {
+            'marca': marca,          # Chave em minúsculas
+            'modelo': modelo,        # Chave em minúsculas
+            'ano': ano,              # Chave em minúsculas
+            'cor': cor,              # Chave em minúsculas
+            'combustivel': combustivel,  # Chave em minúsculas
+            'cambio': cambio,        # Chave em minúsculas
+            'portas': portas         # Chave em minúsculas
+        }
+        
+        inserir_carro(novo_carro)
+        print("\n✅ Carro cadastrado com sucesso!")
     
-    combustiveis = ['gasolina', 'álcool', 'flex', 'diesel', 'elétrico', 'híbrido']
-    combustivel = input(f"Combustível ({'/'.join(combustiveis)}): ").lower()
-    while combustivel not in combustiveis:
-        print("Combustível inválido!")
-        combustivel = input(f"Digite um combustível válido ({'/'.join(combustiveis)}): ").lower()
-    
-    cambios = ['manual', 'automático', 'automatizado', 'cvt']
-    cambio = input(f"Câmbio ({'/'.join(cambios)}): ").lower()
-    while cambio not in cambios:
-        print("Câmbio inválido!")
-        cambio = input(f"Digite um câmbio válido ({'/'.join(cambios)}): ").lower()
-    
-    portas = int(input('Número de portas (2-5): '))
-    while portas < 2 or portas > 5:
-        print("Número de portas inválido!")
-        portas = int(input('Digite um número entre 2 e 5: '))
-    
-    novo_carro = {
-        'Marca': marca,
-        'Modelo': modelo,
-        'Ano': ano,
-        'Cor': cor,
-        'Combustível': combustivel,
-        'Câmbio': cambio,
-        'Portas': portas
-    }
-    
-    inserir_carro(novo_carro)
-    print("\n✅ Carro cadastrado com sucesso!")
+    except ValueError:
+        print("❌ Entrada inválida! Ano e portas devem ser números inteiros.")
+        return
 
 def deletar_carro():
     listar_carros()
 
     try:
-        carro_id = int(input("n\Digite o ID do carro que deseja deletar: "))
+        carro_id = int(input("\nDigite o ID do carro que deseja deletar: "))
     except ValueError:
         print("❌ ID inválido! Digite um número inteiro.")
         return
@@ -90,10 +95,10 @@ def deletar_carro():
         resultado = conn.execute(text("DELETE FROM carros WHERE id = :id"), {"id": carro_id})
         conn.commit()
 
-    if resultado.rowcount>0:
-        print(f"n\Carro com ID {carro_id} deletado com sucesso!")
-    else:
-        print(f"n\Nenhum carro encontrado com ID {carro_id}.")      
+        if resultado.rowcount > 0:
+            print(f"\nCarro com ID {carro_id} deletado com sucesso!")
+        else:
+            print(f"\nNenhum carro encontrado com ID {carro_id}")
 
 def menu_principal():
     criar_tabela()
@@ -103,7 +108,7 @@ def menu_principal():
         print('1. Ver carros cadastrados')
         print('2. Cadastrar novo carro')
         print('3. Sair')
-        print('4. Deketar carro')
+        print('4. Deletar carro')  # Corrigido o typo "Deketar" para "Deletar"
         
         opcao = input('\nEscolha uma opção (1-4): ')
         
@@ -114,10 +119,10 @@ def menu_principal():
         elif opcao == '3':
             print("\n🚪 Programa encerrado. Até logo!")
             break
-        elif opcao=='4':
+        elif opcao == '4':
             deletar_carro()
         else:
-            print("\n❌ Opção inválida! Digite 1 à 4")
+            print("\n❌ Opção inválida! Digite um número de 1 a 4")
 
 if __name__ == "__main__":
     menu_principal()
