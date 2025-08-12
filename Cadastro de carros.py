@@ -2,7 +2,6 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 from datetime import datetime
 
-# Conexão com o banco SQLite
 engine = create_engine('sqlite:///cadastro_carros.db')
 
 def criar_tabela():
@@ -66,13 +65,13 @@ def cadastrar_novo():
             portas = int(input('Digite um número entre 2 e 5: '))
         
         novo_carro = {
-            'marca': marca,          # Chave em minúsculas
-            'modelo': modelo,        # Chave em minúsculas
-            'ano': ano,              # Chave em minúsculas
-            'cor': cor,              # Chave em minúsculas
-            'combustivel': combustivel,  # Chave em minúsculas
-            'cambio': cambio,        # Chave em minúsculas
-            'portas': portas         # Chave em minúsculas
+            'marca': marca,          
+            'modelo': modelo,        
+            'ano': ano,             
+            'cor': cor,              
+            'combustivel': combustivel,  
+            'cambio': cambio,        
+            'portas': portas        
         }
         
         inserir_carro(novo_carro)
@@ -83,12 +82,19 @@ def cadastrar_novo():
         return
 
 def deletar_carro():
-    listar_carros()
+    df = listar_carros()
+    if df.empty:
+        return
 
     try:
         carro_id = int(input("\nDigite o ID do carro que deseja deletar: "))
     except ValueError:
         print("❌ ID inválido! Digite um número inteiro.")
+        return
+    
+    confirmação = input(f"Tem certeza que deseja deletar o carro ID {carro_id}? (s/n): ").lower()
+    if confirmação != 's':
+        print("❌ Operação cancelada.")
         return
     
     with engine.connect() as conn:
@@ -108,7 +114,7 @@ def menu_principal():
         print('1. Ver carros cadastrados')
         print('2. Cadastrar novo carro')
         print('3. Sair')
-        print('4. Deletar carro')  # Corrigido o typo "Deketar" para "Deletar"
+        print('4. Deletar carro')  
         
         opcao = input('\nEscolha uma opção (1-4): ')
         
