@@ -77,6 +77,24 @@ def cadastrar_novo():
     inserir_carro(novo_carro)
     print("\n✅ Carro cadastrado com sucesso!")
 
+def deletar_carro():
+    listar_carros()
+
+    try:
+        carro_id = int(input("n\Digite o ID do carro que deseja deletar: "))
+    except ValueError:
+        print("❌ ID inválido! Digite um número inteiro.")
+        return
+    
+    with engine.connect() as conn:
+        resultado = conn.execute(text("DELETE FROM carros WHERE id = :id"), {"id": carro_id})
+        conn.commit()
+
+    if resultado.rowcount>0:
+        print(f"n\Carro com ID {carro_id} deletado com sucesso!")
+    else:
+        print(f"n\Nenhum carro encontrado com ID {carro_id}.")      
+
 def menu_principal():
     criar_tabela()
     
@@ -85,8 +103,9 @@ def menu_principal():
         print('1. Ver carros cadastrados')
         print('2. Cadastrar novo carro')
         print('3. Sair')
+        print('4. Deketar carro')
         
-        opcao = input('\nEscolha uma opção (1-3): ')
+        opcao = input('\nEscolha uma opção (1-4): ')
         
         if opcao == '1':
             listar_carros()
@@ -95,8 +114,10 @@ def menu_principal():
         elif opcao == '3':
             print("\n🚪 Programa encerrado. Até logo!")
             break
+        elif opcao=='4':
+            deletar_carro()
         else:
-            print("\n❌ Opção inválida! Digite 1, 2 ou 3")
+            print("\n❌ Opção inválida! Digite 1 à 4")
 
 if __name__ == "__main__":
     menu_principal()
