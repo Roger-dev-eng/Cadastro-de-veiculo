@@ -31,7 +31,7 @@ def listar_carros(engine):
     if df.empty:
         print("\nNenhum carro cadastrado ainda!")
     else:
-        print("\n🚗 Todos os Carros Cadastrados 🚗")
+        print("\n Todos os Carros Cadastrados ")
         print(df.to_string(index=False))
     return df
 
