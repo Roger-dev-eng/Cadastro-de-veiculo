@@ -5,13 +5,13 @@ def criar_tabela(engine):
     with engine.connect() as conn:
         conn.execute(text("""
         CREATE TABLE IF NOT EXISTS carros (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            marca TEXT NOT NULL,
-            modelo TEXT NOT NULL,
+            id SERIAL PRIMARY KEY,
+            marca VARCHAR(100) NOT NULL,
+            modelo VARCHAR(100) NOT NULL,
             ano INTEGER NOT NULL,
-            cor TEXT NOT NULL,
-            combustivel TEXT NOT NULL,
-            cambio TEXT NOT NULL,
+            cor VARCHAR(100) NOT NULL,
+            combustivel VARCHAR(100) NOT NULL,
+            cambio VARCHAR(50) NOT NULL,
             portas INTEGER NOT NULL,
             data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )

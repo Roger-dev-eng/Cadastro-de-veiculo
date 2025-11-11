@@ -1,9 +1,9 @@
 from sqlalchemy import create_engine
-from database import criar_tabela, listar_carros, atualizar_carro
-from cadastro import cadastrar_novo, remover_carro
+from app.database import criar_tabela, listar_carros, atualizar_carro
+from app.cadastro import cadastrar_novo, remover_carro
 
 def menu_principal():
-    engine = create_engine('sqlite:///cadastro_carros.db')
+    engine = create_engine('postgresql+psycopg2://admin_carros:senha_segura@localhost:5432/cadastro_carros')
     criar_tabela(engine)
     
     while True:
@@ -25,10 +25,10 @@ def menu_principal():
         elif opcao == '4':
             remover_carro(engine)
         elif opcao == '5':
-            print("\n🚪 Programa encerrado. Até logo!")
+            print("\n Programa encerrado. Até logo!")
             break
         else:
-            print("\n❌ Opção inválida! Digite um número de 1 a 5")
+            print("\n Opção inválida! Digite um número de 1 a 5")
 
 if __name__ == "__main__":
     menu_principal()

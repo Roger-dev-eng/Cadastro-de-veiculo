@@ -1,4 +1,4 @@
-from database import inserir_carro, listar_carros
+from app.database import inserir_carro, listar_carros
 import pandas as pd
 from sqlalchemy import text
 

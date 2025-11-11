@@ -1,2 +1,8 @@
-pandas
 sqlalchemy
+psycopg2
+python-dotenv
+pandas
+requests
+matplotlib
+seaborn
+jupyter
