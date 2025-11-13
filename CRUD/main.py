@@ -1,9 +1,18 @@
+import os
 from sqlalchemy import create_engine
-from app.database import criar_tabela, listar_carros, atualizar_carro
-from app.cadastro import cadastrar_novo, remover_carro
+from dotenv import load_dotenv
+from CRUD.database import criar_tabela, listar_carros, atualizar_carro
+from CRUD.cadastro import cadastrar_novo, remover_carro
+
+load_dotenv(dotenv_path="config/.env")
 
 def menu_principal():
-    engine = create_engine('postgresql+psycopg2://admin_carros:senha_segura@localhost:5432/cadastro_carros')
+    database_url = os.getenv("DATABASE_URL")
+
+    if not database_url:
+        raise ValueError("Variável DATABASE_URL não encontrada no arquivo .env")
+
+    engine = create_engine(database_url)
     criar_tabela(engine)
     
     while True:
@@ -25,10 +34,10 @@ def menu_principal():
         elif opcao == '4':
             remover_carro(engine)
         elif opcao == '5':
-            print("\n Programa encerrado. Até logo!")
+            print("\nPrograma encerrado. Até logo!")
             break
         else:
-            print("\n Opção inválida! Digite um número de 1 a 5")
+            print("\nOpção inválida! Digite um número de 1 a 5")
 
 if __name__ == "__main__":
     menu_principal()

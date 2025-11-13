@@ -1,4 +1,4 @@
-from app.database import inserir_carro, listar_carros
+from CRUD.database import inserir_carro, listar_carros, atualizar_carro
 import pandas as pd
 from sqlalchemy import text
 
@@ -52,7 +52,7 @@ def cadastrar_novo(engine):
     }
         
     inserir_carro(engine, novo_carro)
-    print("\n✅ Carro cadastrado com sucesso!")
+    print("\n Carro cadastrado com sucesso!")
 
 def remover_carro(engine):
     df = listar_carros(engine)
@@ -62,18 +62,18 @@ def remover_carro(engine):
     try:
         carro_id = int(input("\nDigite o ID do carro que deseja deletar: "))
     except ValueError:
-        print("❌ ID inválido! Digite um número inteiro.")
+        print(" ID inválido! Digite um número inteiro.")
         return
     
     confirmacao = input(f"Tem certeza que deseja deletar o carro ID {carro_id}? (s/n): ").lower()
     if confirmacao != 's':
-        print("❌ Operação cancelada.")
+        print(" Operação cancelada.")
         return
     
     with engine.connect() as conn:
         resultado = conn.execute(text("DELETE FROM carros WHERE id = :id"), {"id": carro_id})
         conn.commit()
         if resultado.rowcount > 0:
-            print(f"\n✅ Carro com ID {carro_id} deletado com sucesso!")
+            print(f"\n Carro com ID {carro_id} deletado com sucesso!")
         else:
-            print(f"\n⚠ Nenhum carro encontrado com ID {carro_id}.")
+            print(f"\n Nenhum carro encontrado com ID {carro_id}.")

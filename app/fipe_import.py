@@ -9,7 +9,7 @@ def obter_marcas():
     url = "https://parallelum.com.br/fipe/api/v1/carros/marcas"
     try:
         resposta = requests.get(url)
-        time.sleep(1)
+        time.sleep(0.5)
         resposta.raise_for_status()
         dados = resposta.json()
         if isinstance(dados, list) and all(isinstance(m, dict) for m in dados):
@@ -23,22 +23,22 @@ def obter_marcas():
 def obter_modelos(codigo_marca):
     url = f"https://parallelum.com.br/fipe/api/v1/carros/marcas/{codigo_marca}/modelos"
     resposta = requests.get(url)
-    time.sleep(1)
+    time.sleep(0.5)
     return resposta.json().get("modelos", [])
 
 def obter_anos(codigo_marca, codigo_modelo):
     url = f"https://parallelum.com.br/fipe/api/v1/carros/marcas/{codigo_marca}/modelos/{codigo_modelo}/anos"
     resposta = requests.get(url)
-    time.sleep(1)
+    time.sleep(0.5)
     return resposta.json()
 
 def obter_detalhes(codigo_marca, codigo_modelo, codigo_ano):
     url = f"https://parallelum.com.br/fipe/api/v1/carros/marcas/{codigo_marca}/modelos/{codigo_modelo}/anos/{codigo_ano}"
     resposta = requests.get(url)
-    time.sleep(1)
+    time.sleep(0.5)
     return resposta.json()
 
-def coletar_dados_fipe(limite_registros=100):
+def coletar_dados_fipe(limite_registros=1000):
     registros = []
     marcas = obter_marcas()
     contador = 0
@@ -65,7 +65,7 @@ def coletar_dados_fipe(limite_registros=100):
                     detalhe = obter_detalhes(cod_marca, cod_modelo, cod_ano)
                     ano_modelo = detalhe.get("AnoModelo")
                     if isinstance(ano_modelo, int) and ano_modelo > 2025:
-                        ano_modelo = "N/A"
+                        ano_modelo = None
                         
                     registros.append({
                         "marca": nome_marca,
@@ -103,8 +103,10 @@ def _limpar_valor(valor):
 
 def salvar_no_banco(df):
     if df.empty:
-        print("\n Nenhum dado coletado. Nada será salvo no banco.")
+        print("\nNenhum dado coletado. Nada será salvo no banco.")
         return
+
+    df = df.drop_duplicates(subset=["codigo_fipe", "ano_modelo", "combustivel"], keep="first")
 
     with engine.begin() as conn:
         conn.execute(text("""
@@ -121,10 +123,12 @@ def salvar_no_banco(df):
             data_consulta VARCHAR(50)
         );
         """))
-    df.to_sql("fipe_carros", engine, if_exists="replace", index=False)
-    print("\n Dados inseridos com sucesso no PostgreSQL (tabela: fipe_carros).")
+    
+    df.to_sql("fipe_carros", engine, if_exists="append", index=False)
+    print(f"\n{len(df)} registros inseridos com sucesso no PostgreSQL.")
 
-def importar_dados_fipe(limite_registros=100):
+
+def importar_dados_fipe(limite_registros=1000):
     df = coletar_dados_fipe(limite_registros)
     salvar_no_banco(df)
     print("\n Pipeline FIPE concluído com sucesso.")
