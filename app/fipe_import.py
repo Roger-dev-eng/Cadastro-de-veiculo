@@ -43,11 +43,12 @@ def coletar_dados_fipe(limite_registros=100):
     marcas = obter_marcas()
     contador = 0
 
-    print(f"\n Coletando dados da API da FIPE (limite: {limite_registros})...\n")
+    print(f"\nColetando dados da API da FIPE (limite: {limite_registros})...\n")
 
-    for marca in tqdm(marcas, desc="Marcas"):
+    for marca in marcas:
         cod_marca = marca.get("codigo")
         nome_marca = marca.get("nome")
+        print(f"Processando marca: {nome_marca}")
 
         modelos = obter_modelos(cod_marca)
         for modelo in modelos:
@@ -62,10 +63,14 @@ def coletar_dados_fipe(limite_registros=100):
                 cod_ano = ano["codigo"] if isinstance(ano, dict) else ano
                 try:
                     detalhe = obter_detalhes(cod_marca, cod_modelo, cod_ano)
+                    ano_modelo = detalhe.get("AnoModelo")
+                    if isinstance(ano_modelo, int) and ano_modelo > 2025:
+                        ano_modelo = "N/A"
+                        
                     registros.append({
                         "marca": nome_marca,
                         "modelo": nome_modelo,
-                        "ano_modelo": detalhe.get("AnoModelo"),
+                        "ano_modelo": ano_modelo,
                         "combustivel": detalhe.get("Combustivel"),
                         "valor_str": detalhe.get("Valor"),
                         "valor": _limpar_valor(detalhe.get("Valor")),
@@ -74,16 +79,19 @@ def coletar_dados_fipe(limite_registros=100):
                         "data_consulta": detalhe.get("DataConsulta")
                     })
                     contador += 1
+                    print(f"Registros coletados: {contador}", end="\r")
                     if contador >= limite_registros:
-                        print(f"\n Limite de {limite_registros} registros atingido.")
+                        print(f"\nLimite de {limite_registros} registros atingido.")
                         return pd.DataFrame(registros)
                 except Exception as e:
-                    print(f" Erro ao obter detalhes de {nome_marca} {nome_modelo} ({cod_ano}): {e}")
+                    print(f"Erro ao obter detalhes de {nome_marca} {nome_modelo} ({cod_ano}): {e}")
                     continue
 
     df = pd.DataFrame(registros)
-    print(f"\n Total de registros coletados: {len(df)}")
+    print(f"\nTotal de registros coletados: {len(df)}")
     return df
+
+
 
 def _limpar_valor(valor):
     if not valor:
