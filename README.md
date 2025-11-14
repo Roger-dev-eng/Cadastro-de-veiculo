@@ -20,7 +20,7 @@ A pipeline foi construída em **Python**, utilizando **PostgreSQL** como banco d
 ```
 cadastro-veiculos/
 │
-├──  app/
+├── app/
 │   ├── __init__.py           # Inicializa a conexão com o banco PostgreSQL
 │   ├── fipe_import.py        # Pipeline de coleta e inserção de dados da API FIPE
 │   ├── analysis.py           # Funções de análise e consultas SQL
@@ -28,181 +28,123 @@ cadastro-veiculos/
 │         ├── __init__.py     # Permite importar funções de utilidade
 │         ├── helpers.py      # Tem funções de limpeza, validação e logs
 │
-├──  CRUD/                    # Permite a criação de uma banco de dados para cadastrar, listar, atualizar e remover carros.
+├── CRUD/                     # Permite a criação de uma banco de dados para cadastrar, listar, atualizar e remover carros.
 │     └── cadastro.py
-│   ├── __init__.py
-│   ├── connection.py         # Pool de conexões PostgreSQL
-│   ├── schemas.py            # Definição de tabelas (DDL)
-│   ├── repository.py         # Operações CRUD
-│   └── migrations/
-│       ├── 001_initial_schema.sql
-│       └── 002_add_indexes.sql
+│     └── __init__.py
+│     └── database.py
+│     └── main.py
+│ 
+├── config/
+│   ├── .db_config.py         # Carrega e valida a string de conexão com o PostgreSQL
 │
-├──  domain/
-│   ├── __init__.py
-│   ├── entities.py  # Classes de domínio (Vehicle, Brand, Model)
-│   └── value_objects.py   # Objetos de valor (Price, Year, FuelType)
+├── data/                     # Armazena dados e logs (opcional)
+│   ├── data/
+│   ├── exports/
+│   ├── processed/
+│   └── raw/
 │
-├──  api/
-│   ├── __init__.py
-│   ├── fipe_client.py                # Cliente HTTP para API FIPE
-│   └── rate_limiter.py               # Controle de taxa de requisições
+├── notebooks/
+│   └── analise_fipe.ipynb    # Notebook para visualizações e análises dos dados
 │
-├──  analytics/
-│   ├── __init__.py
-│   ├── reports.py                    # Geração de relatórios
-│   ├── metrics.py                    # Cálculo de métricas e KPIs
-│   └── visualizations.py             # Gráficos e dashboards
+├── requirements.txt
 │
-├──  shared/
-│   ├── __init__.py
-│   ├── config.py                     # Configurações globais (env vars)
-│   ├── logger.py                     # Sistema de logs centralizado
-│   ├── exceptions.py                 # Exceções customizadas
-│   └── validators.py                 # Validadores reutilizáveis
-│
-├──  cli/
-│   ├── __init__.py
-│   └── commands.py                   # Interface de linha de comando
-│
-├── 📓 notebooks/
-│   └── exploratory_analysis.ipynb    # Análises exploratórias
-│
-├──  storage/
-│   ├── cache/                        # Cache de requisições HTTP
-│   ├── exports/                      # Arquivos CSV, JSON exportados
-│   └── logs/                         # Arquivos de log rotativos
-│
-├──  deployment/
-│   ├── docker/
-│   │   ├── Dockerfile
-│   │   └── docker-compose.yml
-│   └── kubernetes/
-│       └── deployment.yaml
-│
-├──  tests/
-│   ├── unit/                         # Testes unitários
-│   ├── integration/                  # Testes de integração
-│   └── fixtures/                     # Dados de teste
-│
-├── main.py                           # 🎬 Ponto de entrada principal
-├── pyproject.toml                    # Configuração do projeto (PEP 517/518)
-├── .env.template                     # Template de variáveis de ambiente
-├── .dockerignore
-├── .gitignore
 └── README.md
 ```
 
 ---
 
-## 📋 Descrição dos Módulos
 
-### 📦 **pipeline/**
-Contém toda a lógica do processo ETL:
-- **extract.py**: Busca dados da API FIPE
-- **transform.py**: Limpa, normaliza e valida os dados
-- **load.py**: Insere dados no PostgreSQL
-- **orchestrator.py**: Coordena a execução das etapas
+## Explicação dos principais componentes
 
-### 🗄️ **database/**
-Gerenciamento completo do banco de dados:
-- **connection.py**: Pool de conexões otimizado
-- **schemas.py**: Definições de tabelas e índices
-- **repository.py**: Padrão Repository para operações de dados
-- **migrations/**: Scripts SQL versionados
+#### `fipe_import.py`
+Responsável por:
+- Coletar dados da **API FIPE**.
+- Tratar os dados (limpeza de campos, substituição de anos inválidos por `N/A`, etc.).
+- Evitar duplicidade ao inserir no banco.
+- Criar a tabela `fipe_carros` caso não exista.
+- Inserir os dados tratados no banco PostgreSQL.
 
-### 🎯 **domain/**
-Camada de domínio do negócio:
-- **entities.py**: Entidades principais (Veículo, Marca, Modelo)
-- **value_objects.py**: Objetos imutáveis (Preço, Ano, Tipo de Combustível)
+#### `analysis.py`
+Contém consultas SQL e funções de análise, como:
+- Cálculo do **preço médio por marca**.
+- Cálculo do **preço médio por tipo de combustível**.
+- Retorno de DataFrames prontos para visualização.
 
-### 🌐 **api/**
-Comunicação com APIs externas:
-- **fipe_client.py**: Cliente HTTP com retry e timeout
-- **rate_limiter.py**: Controle de requisições por segundo
+#### `visualization.ipynb`
+Notebook com:
+- Conexão ao banco de dados.
+- Leitura dos dados FIPE armazenados.
+- Visualizações com **Matplotlib**, **Seaborn** e **Plotly** (ex.: distribuição de preços, comparação por combustível, etc.).
 
-### 📊 **analytics/**
-Análises e visualizações:
-- **reports.py**: Relatórios automatizados
-- **metrics.py**: KPIs e estatísticas
-- **visualizations.py**: Gráficos interativos
-
-### 🔧 **shared/**
-Utilitários compartilhados:
-- **config.py**: Carrega variáveis de ambiente
-- **logger.py**: Logs estruturados (JSON)
-- **exceptions.py**: Hierarquia de exceções
-- **validators.py**: Validações de CPF, CNPJ, placas, etc.
-
-### 💻 **cli/**
-Interface de linha de comando:
-```bash
-python -m cli run-pipeline
-python -m cli export-data --format csv
-python -m cli generate-report
-```
-
-### 💾 **storage/**
-Armazenamento local:
-- **cache/**: Cache de respostas HTTP (Redis-like)
-- **exports/**: Dados exportados em vários formatos
-- **logs/**: Histórico de execuções
-
-### 🚀 **deployment/**
-Configurações de deploy:
-- **Docker**: Containerização da aplicação
-- **Kubernetes**: Orquestração em produção
-
-### 🧪 **tests/**
-Testes automatizados:
-- **unit/**: Testes isolados de funções
-- **integration/**: Testes de integração com banco
-- **fixtures/**: Dados mock para testes
+#### `run.py`
+Executa a pipeline completa, incluindo:
+1. Coleta dos dados FIPE.
+2. Armazenamento no banco.
+3. Execução das análises de preço médio.
 
 ---
 
-## 🚀 Como Usar
-```bash
-# Instalar dependências
-pip install -e .
+## Resultados e Análises
 
-# Configurar ambiente
-cp .env.template .env
+### Visão Geral
 
-# Executar pipeline completo
-python main.py
+Após a execução da pipeline, os dados extraídos da API FIPE são processados, armazenados e analisados, gerando insights valiosos sobre o mercado automotivo brasileiro.
 
-# Usar CLI
-python -m cli run-pipeline --source fipe
-python -m cli generate-report --period monthly
-```
+
+Os dados são persistidos na tabela **`fipe_carros`** do PostgreSQL, contendo informações completas sobre:
+- Marcas e modelos de veículos
+- Preços de referência FIPE
+- Anos de fabricação
+- Tipos de combustível
+- Códigos FIPE
 
 ---
 
-## 📦 Dependências Principais
+## Exemplos
 
-- **PostgreSQL**: Banco de dados relacional
-- **psycopg2**: Driver Python para PostgreSQL
-- **requests**: Cliente HTTP
-- **pandas**: Manipulação de dados
-- **click/typer**: Interface CLI
-- **python-dotenv**: Gerenciamento de variáveis de ambiente
-- **loguru**: Sistema de logs avançado
+### Média de Preço por Marca
 
+| Marca      | Preço Médio (R$) | Total de Modelos |
+|------------|------------------|------------------|
+| Agrale     | 213.013,96       | 85              |
+| Acura      | 23.885,73        | 15              |
+| Audi       | 180.450,20       | 342             |
+| BMW        | 195.320,50       | 278             |
+| Chevrolet  | 85.430,18        | 1.245           |
+| Fiat       | 68.920,45        | 987             |
+| Ford       | 92.150,33        | 856             |
+| Honda      | 110.280,67       | 423             |
+| Hyundai    | 95.670,89        | 512             |
+| Toyota     | 125.890,12       | 645             |
+
+### Média de Preço por Tipo de Combustível
+
+| Combustível | Preço Médio (R$) | Total de Veículos |
+|-------------|------------------|-------------------|
+| Diesel      | 213.013,96       | 85               |
+| Gasolina    | 89.450,32        | 4.823            |
+| Flex        | 76.320,15        | 3.567            |
+| Elétrico    | 285.670,00       | 42               |
+| Híbrido     | 198.450,50       | 156              |
+| GNV         | 45.230,80        | 234              |
+
+
+##  Tecnologias Utilizadas
+
+
+| Tecnologia    | Versão  | Função                                    |
+|---------------|---------|-------------------------------------------|
+| **Python**    | 3.13    | Linguagem principal do projeto            |
+| **PostgreSQL**| 15+     | Banco de dados relacional                 |
+| **SQLAlchemy**| 2.0+    | ORM para mapeamento objeto-relacional     |
+| **Pandas**    | 2.1+    | Manipulação e análise de dados            |
+| **Requests**  | 2.31+   | Cliente HTTP para consumo da API FIPE     |
+| **Matplotlib**  | 3.8+    | Criação de gráficos estáticos          |
+| **Seaborn**     | 0.13+   | Visualizações estatísticas avançadas   |
+| **Plotly**      | 5.18+   | Gráficos interativos (opcional)        |
+| **Jupyter**     | 1.0+    | Ambiente de notebooks interativos      |
+| **tqdm**         | 4.66+   | Barras de progresso para ETL           |
+| **python-dotenv**| 1.0+    | Gerenciamento de variáveis de ambiente |
+| **psycopg2**     | 2.9+    | Driver PostgreSQL para Python          |
+| **loguru**       | 0.7+    | Sistema de logs estruturado            |
 ---
-
-## 🔄 Fluxo de Dados
-```
-API FIPE → Extract → Transform → Validate → Load → PostgreSQL
-                                                         ↓
-                                                    Analytics
-```
-
----
-
-## 📝 Convenções
-
-- **Código**: PEP 8 (Black formatter)
-- **Commits**: Conventional Commits
-- **Branches**: GitFlow
-- **Testes**: Cobertura mínima de 80%
