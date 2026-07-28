@@ -43,6 +43,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install -e .
 
       - name: Validar sintaxe do projeto
         run: |
@@ -50,4 +51,4 @@ jobs:
 
       - name: Executar testes
         run: |
-          pytest -q
+          python -m pytest -q
