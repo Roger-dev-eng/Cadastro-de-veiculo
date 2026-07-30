@@ -5,25 +5,28 @@
 - [Objetivo](#objetivo)
 - [Estrutura do projeto](#estrutura-do-projeto)
 - [Explicação dos principais componentes](#explicação-dos-principais-componentes)
+- [Como executar localmente](#como-executar-localmente)
+- [Como executar com Docker](#como-executar-com-docker)
+- [Deploy no Render com Supabase](#deploy-no-render-com-supabase)
 - [Resultados e análises](#resultados-e-análises)
-- [Dados analisados](#dados-analisados)
+- [O que foi aprendido](#o-que-foi-aprendido)
 - [Tecnologias utilizadas](#tecnologias-utilizadas)
 
 
 ## Descrição
 
-Este projeto implementa uma **pipeline de dados automatizada** para coletar, armazenar e analisar informações da **tabela FIPE**, que contém dados de veículos (marca, modelo, ano, combustível e preço).  
-O objetivo é demonstrar o processo completo de **extração, transformação e carregamento (ETL)** de dados de uma API pública até um banco de dados relacional, com visualizações analíticas para insights.
+Este projeto implementa uma **pipeline de dados automatizada** que coleta informações da API FIPE, transforma os dados e os disponibiliza em um dashboard interativo. Os registros de veículos — marca, modelo, ano, combustível e preço — são persistidos em PostgreSQL. O projeto usa **Python**, **SQLAlchemy** e **Streamlit**. No desenvolvimento local, o PostgreSQL é executado com Docker Compose; em produção, a aplicação é publicada no **Render** e se conecta a um banco PostgreSQL hospedado no **Supabase**.
 
-A pipeline foi construída em **Python**, utilizando **PostgreSQL** como banco de dados e diversas bibliotecas para manipulação e visualização dos dados.
+Para acessar a aplicação: https://pipeline-de-dados-fipe.onrender.com/
 
 ## Objetivo
 
--  Automatizar a **coleta de dados** da API FIPE (Parallelum).
-- Fazer a **limpeza e padronização** dos dados coletados.
-- Armazenar os dados tratados em um **banco PostgreSQL**.
-- Evitar inserções duplicadas no banco.
-- Gerar **análises estatísticas e visuais** sobre os preços médios por marca e tipo de combustível.
+- Automatizar a coleta de dados da API FIPE (Parallelum).
+- Limpar, validar e padronizar os dados coletados.
+- Armazenar os registros em PostgreSQL, localmente ou no Supabase em produção.
+- Evitar duplicidades por código FIPE, ano-modelo e combustível.
+- Disponibilizar análises visuais de preços, marcas, anos e combustíveis.
+- Documentar uma implantação segura no Render usando variáveis de ambiente.
 
 ## Estrutura do Projeto
 
@@ -90,7 +93,7 @@ Inicia o dashboard Streamlit, que já permite executar a coleta FIPE e acompanha
 
 ---
 
-## Como executar
+## Como executar localmente
 
 Instale as dependências:
 
@@ -98,8 +101,25 @@ Instale as dependências:
 pip install -r requirements.txt
 ```
 
-Inicie o dashboard e use a própria interface para executar a coleta e ver as análises:
+Configure as variáveis necessárias do banco de dados no arquivo `.env`.
 
+O `.env` deve conter as variáveis usadas pelo PostgreSQL:
+
+```env
+POSTGRES_DB=nome_do_banco
+POSTGRES_USER=usuario_do_banco
+POSTGRES_PASSWORD=sua_senha_local
+DATABASE_URL=postgresql+psycopg2://usuario_do_banco:sua_senha_local@localhost:5432/nome_do_banco
+```
+
+Variáveis opcionais de configuração:
+
+```env
+RECORDS_LIMIT=650       # Limite de registros coletados (padrão: 600)
+FIPE_TIMEOUT=10         # Timeout em segundos para requisições à API
+FIPE_SLEEP_TIME=0.3     # Pausa entre requisições (reserva para uso futuro)
+
+Depois inicie o projeto da seguinte forma:
 ```bash
 python run.py
 ```
@@ -108,7 +128,7 @@ python run.py
 
 O projeto pode ser executado com Docker Compose usando o arquivo `.env` atual.
 
-O `.env` deve conter as variáveis usadas pelo PostgreSQL do Docker:
+O `.env` deve conter as variáveis:
 
 ```env
 POSTGRES_DB=nome_do_banco
@@ -117,10 +137,6 @@ POSTGRES_PASSWORD=sua_senha_local
 ```
 
 Para uso local fora do Docker, mantenha também a `DATABASE_URL` apontando para `localhost`:
-
-```env
-DATABASE_URL=postgresql+psycopg2://usuario_do_banco:sua_senha_local@localhost:5432/nome_do_banco
-```
 
 Variáveis opcionais de configuração:
 
@@ -144,6 +160,20 @@ Depois acesse:
 http://localhost:8501
 ```
 
+## Deploy no Render com Supabase
+
+Durante o desenvolvimento, o PostgreSQL foi executado localmente com Docker
+Compose. Esse ambiente permitiu testar a pipeline e o dashboard de forma
+isolada, usando a mesma variavel `DATABASE_URL` adotada em producao.
+
+Na publicacao, a aplicacao foi configurada como um Web Service Docker no
+Render. O `Dockerfile` inicia o Streamlit em `0.0.0.0` e usa a porta informada
+pelo Render por meio da variavel `PORT`.
+
+O banco de dados de producao foi hospedado no [Supabase]. Ao executar a coleta no dashboard publicado, a pipeline cria a
+tabela `fipe_carros` quando necessario e grava os registros diretamente no
+banco hospedado no Supabase.
+
 ## Resultados e Análises
 
 ### Visão Geral
@@ -158,52 +188,26 @@ Os dados são persistidos na tabela **`fipe_carros`** do PostgreSQL, contendo in
 - Tipos de combustível
 - Códigos FIPE
 
----
+## O que foi aprendido
 
-## Dados analisados
+O desenvolvimento deste projeto consolidou conhecimentos práticos sobre:
 
-### Dados brutos
+- Construção de uma pipeline ETL, desde o consumo de uma API pública até a persistência dos dados.
+- Tratamento e validação de dados com Pandas antes da gravação no banco.
+- Uso de restrições de unicidade e `ON CONFLICT` no PostgreSQL para evitar registros duplicados.
+- Criação de um dashboard interativo com Streamlit e Plotly para explorar os dados coletados.
+- Containerização da aplicação e do banco local com Docker e Docker Compose.
+- Separação entre ambientes local e de produção com variáveis de ambiente.
+- Publicação de uma aplicação Python no Render e integração com o PostgreSQL gerenciado pelo Supabase.
 
-| id  | marca  | modelo                                   | ano_modelo | combustivel | valor_str     | valor    | codigo_fipe | sigla_combustivel | data_consulta |
-|-----|--------|------------------------------------------|------------|-------------|---------------|----------|-------------|-------------------|---------------|
-| 84  | Acura  | Integra GS 1.8                           | 1992       | Gasolina    | R$ 10.963,00  | 10963.0  | 038003-2    | G                 | None          |
-| 85  | Acura  | Integra GS 1.8                           | 1991       | Gasolina    | R$ 10.241,00  | 10241.0  | 038003-2    | G                 | None          |
-| 86  | Acura  | Legend 3.2/3.5                          | 1998       | Gasolina    | R$ 25.096,00  | 25096.0  | 038002-4    | G                 | None          |
-| 87  | Acura  | Legend 3.2/3.5                          | 1997       | Gasolina    | R$ 22.312,00  | 22312.0  | 038002-4    | G                 | None          |
-| 88  | Acura  | Legend 3.2/3.5                          | 1996       | Gasolina    | R$ 20.981,00  | 20981.0  | 038002-4    | G                 | None          |
-| 89  | Acura  | Legend 3.2/3.5                          | 1995       | Gasolina    | R$ 18.857,00  | 18857.0  | 038002-4    | G                 | None          |
-| 90  | Acura  | Legend 3.2/3.5                          | 1994       | Gasolina    | R$ 18.048,00  | 18048.0  | 038002-4    | G                 | None          |
-| 91  | Acura  | Legend 3.2/3.5                          | 1993       | Gasolina    | R$ 16.087,00  | 16087.0  | 038002-4    | G                 | None          |
-| 92  | Acura  | Legend 3.2/3.5                          | 1992       | Gasolina    | R$ 14.625,00  | 14625.0  | 038002-4    | G                 | None          |
-| 93  | Acura  | Legend 3.2/3.5                          | 1991       | Gasolina    | R$ 14.049,00  | 14049.0  | 038002-4    | G                 | None          |
-| 94  | Acura  | NSX 3.0                                 | 1995       | Gasolina    | R$ 40.508,00  | 40508.0  | 038001-6    | G                 | None          |
-| 95  | Acura  | NSX 3.0                                 | 1994       | Gasolina    | R$ 39.083,00  | 39083.0  | 038001-6    | G                 | None          |
-| 96  | Acura  | NSX 3.0                                 | 1993       | Gasolina    | R$ 37.783,00  | 37783.0  | 038001-6    | G                 | None          |
-| 97  | Acura  | NSX 3.0                                 | 1992       | Gasolina    | R$ 36.106,00  | 36106.0  | 038001-6    | G                 | None          |
-| 98  | Acura  | NSX 3.0                                 | 1991       | Gasolina    | R$ 33.002,00  | 33002.0  | 038001-6    | G                 | None          |
-| 99  | Agrale | MARRUÁ 2.8 12V 132cv TDI Diesel          | 2007       | Diesel      | R$ 47.681,00  | 47681.0  | 060001-6    | D                 | None          |
-| 100 | Agrale | MARRUÁ 2.8 12V 132cv TDI Diesel          | 2006       | Diesel      | R$ 46.251,00  | 46251.0  | 060001-6    | D                 | None          |
-| 101 | Agrale | MARRUÁ 2.8 12V 132cv TDI Diesel          | 2005       | Diesel      | R$ 45.122,00  | 45122.0  | 060001-6    | D                 | None          |
-| 102 | Agrale | MARRUÁ 2.8 12V 132cv TDI Diesel          | 2004       | Diesel      | R$ 37.484,00  | 37484.0  | 060001-6    | D                 | None          |
-| 103 | Agrale | MARRUÁ AM 100 2.8 CS TDI Diesel          | 2015       | Diesel      | R$ 107.264,00 | 107264.0 | 060003-2    | D                 | None          |
-
-
-### Preço médio por marca
-<img width="1157" height="651" alt="Captura de tela 2026-01-23 203701" src="https://github.com/user-attachments/assets/fb009276-a40d-45d0-9f6b-939f2456cf16" />
-
-### Evolução do preço médio por ano
-<img width="1065" height="591" alt="Captura de tela 2026-01-15 110157" src="https://github.com/user-attachments/assets/14fd3212-1975-4e8d-a4e8-a94594d86e98" />
-
-### Preço médio por combustível
-<img width="600" height="631" alt="Captura de tela 2026-01-15 105026" src="https://github.com/user-attachments/assets/70c92ab4-9dfe-4908-9061-5424dc445ed3" />
-
-##  Tecnologias Utilizadas
+## Tecnologias Utilizadas
 
 
 | Tecnologia    | Versão  | Função                                    |
 |---------------|---------|-------------------------------------------|
 | **Python**    | 3.13    | Linguagem principal do projeto            |
-| **PostgreSQL**| 15+     | Banco de dados relacional                 |
+| **PostgreSQL**| 16      | Banco de dados relacional                 |
+| **Supabase**  | -       | PostgreSQL gerenciado no ambiente de produção |
 | **SQLAlchemy**| 2.0+    | ORM para mapeamento objeto-relacional     |
 | **Pandas**    | 2.1+    | Manipulação e análise de dados            |
 | **Requests**  | 2.31+   | Cliente HTTP para consumo da API FIPE     |
@@ -213,4 +217,7 @@ Os dados são persistidos na tabela **`fipe_carros`** do PostgreSQL, contendo in
 | **Plotly**      | 6.7+    | Gráficos interativos                   |
 | **python-dotenv**| 1.0+    | Gerenciamento de variáveis de ambiente |
 | **psycopg2-binary** | 2.9+ | Driver PostgreSQL para Python          |
+| **Docker**    | -       | Containerização da aplicação             |
+| **Docker Compose** | -   | Orquestração do ambiente local           |
+| **Render**    | -       | Hospedagem e deploy da aplicação         |
 ---
